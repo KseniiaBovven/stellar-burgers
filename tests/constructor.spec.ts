@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const ORDER_NUMBER = '12345';
+
 test.beforeEach(async ({ page }) => {
   await page.routeFromHAR('./tests/hars/ingredients.json', {
     notFound: 'fallback',
@@ -107,7 +109,10 @@ test.describe('Конструктор бургера', () => {
   });
 
   test.describe('Создание заказа', () => {
-    test('должен оформить заказ и показать номер', async ({ page, context }) => {
+    test('должен оформить заказ, показать номер и очистить конструктор', async ({
+      page,
+      context
+    }) => {
       await context.addCookies([
         {
           name: 'accessToken',
@@ -144,15 +149,19 @@ test.describe('Конструктор бургера', () => {
         timeout: 30000
       });
       await expect(page.locator('[data-testid="order-number"]')).toHaveText(
-        '12345'
+        ORDER_NUMBER
       );
+
+      await page.locator('[data-testid="modal-close"]').click();
+      await expect(page.locator('[data-testid="modal"]')).not.toBeVisible();
 
       await expect(
         page.locator('[data-testid="constructor-bun-top"]')
       ).not.toBeVisible();
 
-      await page.locator('[data-testid="modal-close"]').click();
-      await expect(page.locator('[data-testid="modal"]')).not.toBeVisible();
+      await expect(
+        page.locator('[data-testid="constructor-ingredients"]')
+      ).not.toContainText('Биокотлета из марсианской Магнолии');
     });
   });
 });
